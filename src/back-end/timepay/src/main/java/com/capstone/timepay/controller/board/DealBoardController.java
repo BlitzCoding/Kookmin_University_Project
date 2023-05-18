@@ -136,31 +136,8 @@ public class DealBoardController
 
     @ApiOperation(value = "거래게시판 게시글 삭제")
     @DeleteMapping ("/delete/{id}")
-    public Map<String, Object> delete(@RequestBody DealBoardDTO dealBoardDTO,
-                                      @PathVariable("id") Long id,
-                                      Principal principal)
-    {
-        Map<String, Object> deleteMap = new HashMap<>();
-        DealBoard dealBoard = dealBoardService.getId(id);
-        String boardEmail = dealRegisterService.getEmail(id);
-
-        if (dealBoard == null)
-        {
-            deleteMap.put("success", false);
-            deleteMap.put("message", "해당 게시글을 찾을 수 없습니다");
-            return deleteMap;
-        }
-
-        if (!principal.getName().equals(boardEmail))
-        {
-            deleteMap.put("success", false);
-            deleteMap.put("message", "삭제 권한이 없습니다");
-            return deleteMap;
-        }
-
-        dealBoardService.delete(id);
-        deleteMap.put("success", true);
-        return deleteMap;
+    public void deleteDealBoard(@PathVariable("id") Long id) {
+        dealBoardService.deleteDealBoardById(id);
     }
 
     // == 글 작성 후 로직 == //

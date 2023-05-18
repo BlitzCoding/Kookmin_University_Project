@@ -8,6 +8,11 @@ import com.capstone.timepay.domain.dealAttatchment.DealAttatchmentRepository;
 import com.capstone.timepay.domain.dealBoard.DealBoard;
 import com.capstone.timepay.domain.dealBoard.DealBoardRepository;
 import com.capstone.timepay.domain.dealBoardComment.DealBoardComment;
+import com.capstone.timepay.domain.dealBoardComment.DealBoardCommentRepository;
+import com.capstone.timepay.domain.dealBoardReport.DealBoardReport;
+import com.capstone.timepay.domain.dealBoardReport.DealBoardReportRepository;
+import com.capstone.timepay.domain.dealCommentReport.DealCommentReport;
+import com.capstone.timepay.domain.dealCommentReport.DealCommentReportRepository;
 import com.capstone.timepay.domain.dealRegister.DealRegister;
 import com.capstone.timepay.domain.dealRegister.DealRegisterRepository;
 import com.capstone.timepay.domain.user.User;
@@ -306,5 +311,44 @@ public class DealBoardService
 
     public Page<DealBoard> search(Specification<DealBoard> spec, Pageable pageable) {
         return dealBoardRepository.findAll(spec, pageable);
+    }
+
+    private final DealCommentReportRepository dealCommentReportRepository;
+    private final DealBoardCommentRepository dealBoardCommentRepository;
+    private final DealBoardReportRepository dealBoardReportRepository;
+    @Transactional
+    public void deleteDealBoardById(Long dealBoardId) {
+        DealBoard dealBoard = dealBoardRepository.findById(dealBoardId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 DealBoard를 찾을 수 없습니다."));
+
+        // DealBoard에 연관된 DealBoardComment 삭제
+        List<DealBoardComment> dealBoardComments = dealBoard.getDealBoardComments();
+
+        // DealBoardComment에 연관된 DealCommentReport 삭제
+        for (DealBoardComment comment : dealBoardComments) {
+            List<DealCommentReport> dealCommentReports = comment.getDealCommentReports();
+            dealCommentReportRepository.deleteAll(dealCommentReports);
+        }
+        dealBoardCommentRepository.deleteAll(dealBoardComments);
+
+        // DealBoard에 연관된 DealAttatchment 삭제
+        List<DealAttatchment> dealAttatchments = dealBoard.getDealAttatchments();
+        dealAttatchmentRepository.deleteAll(dealAttatchments);
+
+        // DealBoard에 연관된 DealRegister 삭제
+        List<DealRegister> dealRegisters = dealBoard.getDealRegisters();
+        dealRegisterRepository.deleteAll(dealRegisters);
+
+        // DealBoard에 연관된 DealBoardReport 삭제
+        List<DealBoardReport> dealBoardReports = dealBoard.getDealBoardReports();
+        dealBoardReportRepository.deleteAll(dealBoardReports);
+
+        // Board 삭제
+        Board board = boardRepository.findByDealBoard(dealBoard)
+                .orElseThrow(() -> new IllegalArgumentException("Board를 찾을 수 없습니다."));
+        boardRepository.delete(board);
+
+        // DealBoard 삭제
+        dealBoardRepository.delete(dealBoard);
     }
 }
